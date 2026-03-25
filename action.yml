@@ -6,7 +6,7 @@ inputs:
     required: true
 runs:
   using: docker
-  image: docker://ghcr.io/elvinefendi/devopsellence-deploy-action:latest
+  image: docker://ghcr.io/devopsellence/deploy-action:latest
   env:
     DEVOPSELLENCE_TOKEN: ${{ inputs.token }}
   args:
