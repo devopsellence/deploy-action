@@ -1,8 +1,14 @@
 name: Publish image
 
 on:
-  push:
-    branches: [master]
+  workflow_dispatch:
+    inputs:
+      cli_version:
+        description: CLI version to bake into the image
+        required: true
+      cli_download_url:
+        description: Base URL to download the CLI from
+        required: false
 
 jobs:
   publish:
@@ -25,6 +31,9 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            CLI_VERSION=${{ inputs.cli_version }}
+            CLI_DOWNLOAD_URL=${{ inputs.cli_download_url || 'https://www.devopsellence.com/lfg.sh' }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
