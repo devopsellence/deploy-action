@@ -1,16 +1,16 @@
-# devopsellence-deploy-action
+# devopsellence deploy-action
 
-GitHub Action to build, push, and deploy your app using [devopsellence](https://devopsellence.com).
+GitHub Action to build, push, and deploy your app using [devopsellence](https://www.devopsellence.com).
 
 ## Prerequisites
 
-Your repository must have a `devopsellence.yml` config file. If you haven't set one up yet, run this locally:
+Your repository must have a `devopsellence.yml` config file. If you haven't set one up yet, run this locally in your project directory:
 
 ```bash
 devopsellence init
 ```
 
-This creates the config file with your organization, project, environment, port, and build settings.
+For full configuration options see https://www.devopsellence.com/docs.
 
 ## Setup
 
