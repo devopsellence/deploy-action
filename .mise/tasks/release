@@ -12,8 +12,12 @@ def abort_with(message)
   exit 1
 end
 
+force_existing_tag = ARGV.delete("--force-existing-tag")
+unknown_options = ARGV.grep(/\A--/)
+abort_with("unknown option(s): #{unknown_options.join(', ')}") unless unknown_options.empty?
+
 release_version = ARGV[0].to_s.strip
-abort_with("usage: mise run release -- v1.0.0 [cli-version]") if release_version.empty?
+abort_with("usage: mise run release -- [--force-existing-tag] v1.0.0 [cli-version]") if release_version.empty?
 abort_with("release version must look like v1.0.0") unless release_version.match?(/\Av\d+\.\d+\.\d+\z/)
 
 cli_version = ARGV[1].to_s.strip
@@ -36,10 +40,19 @@ abort_with("could not update action image tag in action.yml") if updated_action 
 
 ACTION_PATH.write(updated_action)
 
+release_tag_exists = system("git", "rev-parse", "-q", "--verify", "refs/tags/#{release_version}", out: File::NULL, err: File::NULL)
+abort_with("tag #{release_version} already exists; rerun with --force-existing-tag to retag it") if release_tag_exists && !force_existing_tag
+
+release_tag_command = if force_existing_tag
+  ["git", "tag", "-fa", release_version, "-m", "Release #{release_version}"]
+else
+  ["git", "tag", "-a", release_version, "-m", "Release #{release_version}"]
+end
+
 [
   ["git", "add", "CLI_VERSION", "action.yml"],
   ["git", "commit", "-m", "Release #{release_version}"],
-  ["git", "tag", "-a", release_version, "-m", "Release #{release_version}"],
+  release_tag_command,
   ["git", "tag", "-fa", major_version, "-m", "Release #{release_version}"]
 ].each do |command|
   puts "$ #{command.join(' ')}"
@@ -49,7 +62,7 @@ end
 puts
 puts "next:"
 puts "git push origin master"
-puts "git push origin #{release_version}"
+puts(force_existing_tag ? "git push --force origin #{release_version}" : "git push origin #{release_version}")
 puts "git push --force origin #{major_version}"
 puts
 puts "prepared #{release_version} with CLI #{cli_version}"

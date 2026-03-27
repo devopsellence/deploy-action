@@ -126,3 +126,12 @@ git push origin master
 git push origin v1.0.0
 git push --force origin v1
 ```
+
+To republish an existing semver tag intentionally:
+
+```bash
+mise run release -- --force-existing-tag v1.0.0 v0.1.0
+git push origin master
+git push --force origin v1.0.0
+git push --force origin v1
+```
