@@ -49,6 +49,57 @@ Or if you have a committed `devopsellence.yml`, the `organization` and `project`
 
 That's it. Every push to `main` will build your Docker image, push it to the registry, and deploy it.
 
+## GitHub-managed env vars and secrets
+
+If you do not want to commit runtime config, the action can sync GitHub values at deploy time:
+
+- Add a repository variable named `DEVOPSELLENCE_ENV_VARS`
+- Add a repository secret named `DEVOPSELLENCE_SECRETS`
+- Pass them through in the workflow `env:` block
+
+Both values must be JSON. A flat object applies to every configured runtime service; a scoped object can use `all`, `web`, and `worker`.
+
+```yaml
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      DEVOPSELLENCE_ENV_VARS: ${{ vars.DEVOPSELLENCE_ENV_VARS }}
+      DEVOPSELLENCE_SECRETS: ${{ secrets.DEVOPSELLENCE_SECRETS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: devopsellence/deploy-action@v1
+        with:
+          token: ${{ secrets.DEVOPSELLENCE_TOKEN }}
+          project: your-project
+```
+
+Example values:
+
+```json
+{
+  "all": {
+    "RAILS_ENV": "production"
+  },
+  "worker": {
+    "QUEUE": "critical"
+  }
+}
+```
+
+```json
+{
+  "all": {
+    "DATABASE_URL": "postgres://..."
+  },
+  "worker": {
+    "REDIS_URL": "redis://..."
+  }
+}
+```
+
+Secrets synced this way are stored as managed environment secrets and are exposed automatically in desired state for the matching service. You do not need to add them to `secret_refs` in `devopsellence.yml`.
+
 ## Inputs
 
 | Input | Required | Description |
