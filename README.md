@@ -135,3 +135,5 @@ git push origin master
 git push --force origin v1.0.0
 git push --force origin v1
 ```
+
+If `CLI_VERSION` and `action.yml` already match the target release, the task skips the extra release commit and retags the current `HEAD`.

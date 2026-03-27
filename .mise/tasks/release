@@ -49,9 +49,22 @@ else
   ["git", "tag", "-a", release_version, "-m", "Release #{release_version}"]
 end
 
+add_command = ["git", "add", "CLI_VERSION", "action.yml"]
+puts "$ #{add_command.join(' ')}"
+abort_with("command failed: #{add_command.join(' ')}") unless system(*add_command)
+
+release_commit_command = ["git", "commit", "-m", "Release #{release_version}"]
+release_commit_needed = !system("git", "diff", "--cached", "--quiet")
+
+if release_commit_needed
+  puts "$ #{release_commit_command.join(' ')}"
+  abort_with("command failed: #{release_commit_command.join(' ')}") unless system(*release_commit_command)
+else
+  puts "$ #{release_commit_command.join(' ')}"
+  puts "skipped; no staged release metadata changes"
+end
+
 [
-  ["git", "add", "CLI_VERSION", "action.yml"],
-  ["git", "commit", "-m", "Release #{release_version}"],
   release_tag_command,
   ["git", "tag", "-fa", major_version, "-m", "Release #{release_version}"]
 ].each do |command|
