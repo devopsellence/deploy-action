@@ -57,3 +57,21 @@ That's it. Every push to `main` will build your Docker image, push it to the reg
 | `organization` | no | Organization name. Required if no `devopsellence.yml` is committed |
 | `project` | no | Project name. Required if no `devopsellence.yml` is committed |
 | `environment` | no | Environment name override (default: `production`) |
+
+## Releasing
+
+Releases publish on semver tags like `v1.0.0`. The baked CLI version lives in `CLI_VERSION`.
+
+To prep the next release locally:
+
+```bash
+mise run release -- v1.0.0 v0.1.0
+```
+
+That updates `action.yml`, writes `CLI_VERSION`, creates a release commit, tags `v1.0.0`, and moves the major tag (`v1`). Then push:
+
+```bash
+git push origin master
+git push origin v1.0.0
+git push --force origin v1
+```

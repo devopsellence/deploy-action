@@ -1,14 +1,9 @@
 name: Publish image
 
 on:
-  workflow_dispatch:
-    inputs:
-      cli_version:
-        description: CLI version to bake into the image
-        required: true
-      cli_download_url:
-        description: Base URL to download the CLI from
-        required: false
+  push:
+    tags:
+      - 'v*.*.*'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -21,6 +16,30 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Derive release metadata
+        id: release
+        shell: bash
+        run: |
+          release_version="${GITHUB_REF_NAME}"
+          if [[ ! "${release_version}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "expected semver tag like v1.0.0, got ${release_version}" >&2
+            exit 1
+          fi
+
+          major_version="${release_version%%.*}"
+          cli_version="$(tr -d '\n' < CLI_VERSION)"
+
+          if [[ -z "${cli_version}" ]]; then
+            echo "CLI_VERSION is empty" >&2
+            exit 1
+          fi
+
+          {
+            echo "release_version=${release_version}"
+            echo "major_version=${major_version}"
+            echo "cli_version=${cli_version}"
+          } >> "${GITHUB_OUTPUT}"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -35,8 +54,9 @@ jobs:
           context: .
           push: true
           build-args: |
-            CLI_VERSION=${{ inputs.cli_version }}
-            CLI_DOWNLOAD_URL=${{ inputs.cli_download_url || 'https://www.devopsellence.com/lfg.sh' }}
+            CLI_VERSION=${{ steps.release.outputs.cli_version }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
+            ghcr.io/${{ github.repository }}:${{ steps.release.outputs.major_version }}
+            ghcr.io/${{ github.repository }}:${{ steps.release.outputs.release_version }}
             ghcr.io/${{ github.repository }}:${{ github.sha }}

@@ -1,6 +1,6 @@
 FROM docker:cli
 
-ARG CLI_DOWNLOAD_URL
+ARG CLI_DOWNLOAD_URL=https://www.devopsellence.com/lfg.sh
 ARG CLI_VERSION
 
 RUN apk add --no-cache curl git bash

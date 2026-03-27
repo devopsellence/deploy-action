@@ -1,0 +1,55 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "pathname"
+
+ROOT = Pathname(__dir__).join("..", "..").expand_path
+CLI_VERSION_PATH = ROOT.join("CLI_VERSION")
+ACTION_PATH = ROOT.join("action.yml")
+
+def abort_with(message)
+  warn message
+  exit 1
+end
+
+release_version = ARGV[0].to_s.strip
+abort_with("usage: mise run release -- v1.0.0 [cli-version]") if release_version.empty?
+abort_with("release version must look like v1.0.0") unless release_version.match?(/\Av\d+\.\d+\.\d+\z/)
+
+cli_version = ARGV[1].to_s.strip
+cli_version = CLI_VERSION_PATH.read.strip if cli_version.empty?
+abort_with("CLI version must look like v0.1.0") unless cli_version.match?(/\Av\d+\.\d+\.\d+\z/)
+
+status = `git status --porcelain`
+abort_with("working tree not clean; commit first") unless $?.success? && status.empty?
+
+major_version = release_version.sub(/\A(v\d+)\..+\z/, '\1')
+
+CLI_VERSION_PATH.write("#{cli_version}\n")
+
+original_action = ACTION_PATH.read
+updated_action = original_action.sub(
+  %r{docker://ghcr\.io/devopsellence/deploy-action:[^\s]+},
+  "docker://ghcr.io/devopsellence/deploy-action:#{release_version}"
+)
+abort_with("could not update action image tag in action.yml") if updated_action == original_action && !original_action.include?("docker://ghcr.io/devopsellence/deploy-action:#{release_version}")
+
+ACTION_PATH.write(updated_action)
+
+[
+  ["git", "add", "CLI_VERSION", "action.yml"],
+  ["git", "commit", "-m", "Release #{release_version}"],
+  ["git", "tag", "-a", release_version, "-m", "Release #{release_version}"],
+  ["git", "tag", "-fa", major_version, "-m", "Release #{release_version}"]
+].each do |command|
+  puts "$ #{command.join(' ')}"
+  abort_with("command failed: #{command.join(' ')}") unless system(*command)
+end
+
+puts
+puts "next:"
+puts "git push origin master"
+puts "git push origin #{release_version}"
+puts "git push --force origin #{major_version}"
+puts
+puts "prepared #{release_version} with CLI #{cli_version}"
