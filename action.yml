@@ -4,11 +4,26 @@ inputs:
   token:
     description: devopsellence API token
     required: true
+  organization:
+    description: Organization name (required if devopsellence.yml is not committed)
+    required: false
+    default: ''
+  project:
+    description: Project name (required if devopsellence.yml is not committed)
+    required: false
+    default: ''
+  environment:
+    description: Environment name override
+    required: false
+    default: ''
 runs:
   using: docker
   image: docker://ghcr.io/devopsellence/deploy-action:latest
   env:
     DEVOPSELLENCE_TOKEN: ${{ inputs.token }}
+    DEVOPSELLENCE_ORGANIZATION: ${{ inputs.organization }}
+    DEVOPSELLENCE_PROJECT: ${{ inputs.project }}
+    DEVOPSELLENCE_ENVIRONMENT: ${{ inputs.environment }}
   args:
     - deploy
     - --non-interactive
